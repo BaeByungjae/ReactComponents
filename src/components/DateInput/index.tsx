@@ -33,7 +33,9 @@ export default DateInput;
 
 const StyledWrapper = styled.div`
   display: inline-flex;
+  position: relative;
   border: 1px solid black;
+  z-index: 10;
   .input {
     border: none;
     outline: none;

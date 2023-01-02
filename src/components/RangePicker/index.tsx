@@ -25,8 +25,10 @@ const RangePicker = () => {
         setDates={setDates}
         onClick={() => setIsCalendar(true)}
       />
-      <div className="date-picker__wrapper">
+      {isCalendar && (
         <div className="picker-wrapper" onClick={() => setIsCalendar(false)} />
+      )}
+      <div className="date-picker__wrapper">
         {isCalendar && <DatePicker setDates={setDates} dates={dates} />}
       </div>
     </StyledWrapper>
@@ -36,16 +38,22 @@ const RangePicker = () => {
 export default RangePicker;
 
 const StyledWrapper = styled.div`
+  position: relative;
   .date-picker__wrapper {
+    position: relative;
+    width: 800px;
+    height: 100%;
+    z-index: 10;
+  }
+  .picker-wrapper {
+    position: absolute;
+    z-index: 1;
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: center;
-    .picker-wrapper {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      background: none;
-    }
+    background: none;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
   }
 `;

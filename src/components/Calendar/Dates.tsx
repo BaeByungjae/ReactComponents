@@ -1,8 +1,9 @@
-import dayjs, { Dayjs } from "dayjs";
+import { Dayjs } from "dayjs";
 import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import { setDates } from "../DatePicker";
 import { dates } from "../RangePicker";
+import { checkDatesFactory, isDateValid, toDateObject, TODAY } from "./module";
 
 interface DateProps {
   currentMonth: Dayjs;
@@ -10,7 +11,7 @@ interface DateProps {
   dates: dates;
 }
 
-interface DateFormat {
+export interface DateFormat {
   dateFormat: Dayjs | null;
   date?: number;
   months?: number;
@@ -19,70 +20,17 @@ interface DateFormat {
   isDisabled: boolean;
 }
 
+const dateTypeMap = {
+  selected: "selected",
+  between: "between",
+  default: "",
+};
+
 const Dates: React.FC<DateProps> = ({ currentMonth, setDates, dates }) => {
-  const FORMAT = "YYYY-MM-DD";
-  const TODAY = dayjs().startOf("day");
   const [weeks, setWeeks] = useState<DateFormat[][]>([]);
   const [hover, setHover] = useState<Dayjs | null>(null);
-  const dateTypeMap = {
-    selected: "selected",
-    between: "between",
-    default: "",
-  };
-
-  const checkRange = (day: DateFormat) => {
-    const { startDate, endDate, type } = dates;
-    const { dateFormat } = day;
-    if (type === "Start") {
-      setDates({
-        startDate: dateFormat?.format(FORMAT) as string,
-        endDate: "",
-        type: "End",
-      });
-      return;
-    }
-    if (!!startDate) {
-      if (dateFormat?.isSameOrAfter(startDate)) {
-        setDates({
-          startDate,
-          endDate: dateFormat?.format(FORMAT) as string,
-          type: "Start",
-        });
-        return;
-      }
-      setDates({
-        startDate: dateFormat?.format(FORMAT) as string,
-        endDate,
-        type: "End",
-      });
-      return;
-    }
-    setDates({
-      startDate,
-      endDate: dateFormat?.format(FORMAT) as string,
-      type: "Start",
-    });
-  };
-
-  const checkDate = (dateFormat: Dayjs | null) => {
-    if (!dateFormat) return "default";
-    if (dateFormat.isSame(dates.startDate) || dateFormat.isSame(dates.endDate))
-      return "selected";
-    if (dateFormat.isBetween(dates.startDate, dates.endDate)) return "between";
-    return "default";
-  };
-
-  const toDateObject = (dateFormat: Dayjs): DateFormat => {
-    const { date, months, years } = dateFormat.toObject();
-
-    return {
-      dateFormat,
-      date,
-      months,
-      years,
-      isDisabled: dateFormat.isBefore(TODAY),
-    } as const;
-  };
+  const { startDate, endDate, type } = dates;
+  const { checkRange, checkDate } = checkDatesFactory(dates, setDates);
 
   const getWeekDates = (current: Dayjs) => {
     const dates: DateFormat[] = [];
@@ -125,24 +73,20 @@ const Dates: React.FC<DateProps> = ({ currentMonth, setDates, dates }) => {
                 className={`col cell ${
                   isDisabled ? "disabled" : "abled"
                 } ${dateType} ${
-                  !!hover &&
-                  !!dates.startDate.length &&
-                  (dateFormat?.isBetween(dates.startDate, hover) ||
+                  hover &&
+                  isDateValid(startDate) &&
+                  (dateFormat?.isBetween(startDate, hover) ||
                     dateFormat?.isSame(hover)) &&
                   "between"
                 }`}
                 key={index}
                 onClick={() => {
-                  if (!dateFormat) return;
-                  if (dateFormat.isBefore(TODAY)) return;
+                  if (!dateFormat || dateFormat.isBefore(TODAY)) return;
                   checkRange(day);
                 }}
                 onMouseEnter={() => {
-                  if (!!dates.startDate.length && !!dates.endDate.length)
-                    return;
-                  !!dates.startDate.length &&
-                    dateFormat &&
-                    setHover(dateFormat);
+                  if (isDateValid(startDate) && isDateValid(endDate)) return;
+                  dateFormat && setHover(dateFormat);
                 }}
                 onMouseLeave={() => setHover(null)}
               >
